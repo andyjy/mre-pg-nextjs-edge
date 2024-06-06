@@ -33,7 +33,6 @@ export default function Home() {
                 className={styles.vercelLogo}
                 width={100}
                 height={24}
-                priority
               />
             </a>
           </div>
@@ -46,7 +45,6 @@ export default function Home() {
             alt="Next.js Logo"
             width={180}
             height={37}
-            priority
           />
         </div>
 
