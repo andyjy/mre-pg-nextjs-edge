@@ -1,3 +1,69 @@
+diff --git a/node_modules/pg/lib/client.js b/node_modules/pg/lib/client.js
+index c6aa3da..f2a75f7 100644
+--- a/node_modules/pg/lib/client.js
++++ b/node_modules/pg/lib/client.js
+@@ -224,7 +224,7 @@ class Client extends EventEmitter {
+         })
+     } else if (this.password !== null) {
+       cb()
+-    } else {
++    } else if (typeof EdgeRuntime !== "string") {
+       try {
+         const pgPass = require('pgpass')
+         pgPass(this.connectionParameters, (pass) => {
+diff --git a/node_modules/pg/lib/connection-parameters.js b/node_modules/pg/lib/connection-parameters.js
+index 6a535a8..02eb89b 100644
+--- a/node_modules/pg/lib/connection-parameters.js
++++ b/node_modules/pg/lib/connection-parameters.js
+@@ -1,7 +1,5 @@
+ 'use strict'
+ 
+-var dns = require('dns')
+-
+ var defaults = require('./defaults')
+ 
+ var parse = require('pg-connection-string').parse // parses a connection string
+@@ -125,6 +123,10 @@ class ConnectionParameters {
+   }
+ 
+   getLibpqConnectionString(cb) {
++    if (typeof EdgeRuntime === "string") {
++      throw new Error("Not compatible with Edge runtime");
++      return;
++    }
+     var params = []
+     add(params, this, 'user')
+     add(params, this, 'password')
+@@ -156,12 +158,17 @@ class ConnectionParameters {
+     if (this.client_encoding) {
+       params.push('client_encoding=' + quoteParamValue(this.client_encoding))
+     }
++    try {
++    var dns = require('dns')
+     dns.lookup(this.host, function (err, address) {
+       if (err) return cb(err, null)
+       params.push('hostaddr=' + quoteParamValue(address))
+       return cb(null, params.join(' '))
+     })
+-  }
++  } catch (e) {
++    params.push('hostaddr=' + quoteParamValue(address))
++    return cb(null, params.join(' '))
++  }}
+ }
+ 
+ module.exports = ConnectionParameters
+diff --git a/node_modules/pg/lib/connection.js b/node_modules/pg/lib/connection.js
+index af4b8f1..c426b15 100644
+--- a/node_modules/pg/lib/connection.js
++++ b/node_modules/pg/lib/connection.js
+@@ -1,6 +1,5 @@
+ 'use strict'
+ 
+-var net = require('net')
+ var EventEmitter = require('events').EventEmitter
+ 
+ const { parse, serialize } = require('pg-protocol')
 diff --git a/node_modules/pg/lib/crypto/utils-webcrypto.js b/node_modules/pg/lib/crypto/utils-webcrypto.js
 index 0433f01..4038729 100644
 --- a/node_modules/pg/lib/crypto/utils-webcrypto.js
@@ -21,3 +87,80 @@ index 0433f01..4038729 100644
  /**
   * The SubtleCrypto API for low level crypto operations.
   * @type SubtleCrypto
+diff --git a/node_modules/pg/lib/crypto/utils.js b/node_modules/pg/lib/crypto/utils.js
+index 9644b15..0994a2f 100644
+--- a/node_modules/pg/lib/crypto/utils.js
++++ b/node_modules/pg/lib/crypto/utils.js
+@@ -1,7 +1,7 @@
+ 'use strict'
+ 
+ const useLegacyCrypto = parseInt(process.versions && process.versions.node && process.versions.node.split('.')[0]) < 15
+-if (useLegacyCrypto) {
++if (useLegacyCrypto && typeof EdgeRuntime !== "string") {
+   // We are on an old version of Node.js that requires legacy crypto utilities.
+   module.exports = require('./utils-legacy')
+ } else {
+diff --git a/node_modules/pg/lib/index.js b/node_modules/pg/lib/index.js
+index 1742d16..0abb12e 100644
+--- a/node_modules/pg/lib/index.js
++++ b/node_modules/pg/lib/index.js
+@@ -28,9 +28,9 @@ var PG = function (clientConstructor) {
+   this.escapeLiteral = escapeLiteral
+ }
+ 
+-if (typeof process.env.NODE_PG_FORCE_NATIVE !== 'undefined') {
+-  module.exports = new PG(require('./native'))
+-} else {
++// if (typeof process.env.NODE_PG_FORCE_NATIVE !== 'undefined') {
++//   module.exports = new PG(require('./native'))
++// } else {
+   module.exports = new PG(Client)
+ 
+   // lazy require native module...the native module may not have installed
+@@ -40,7 +40,7 @@ if (typeof process.env.NODE_PG_FORCE_NATIVE !== 'undefined') {
+     get() {
+       var native = null
+       try {
+-        native = new PG(require('./native'))
++        // native = new PG(require('./native'))
+       } catch (err) {
+         if (err.code !== 'MODULE_NOT_FOUND') {
+           throw err
+@@ -55,4 +55,4 @@ if (typeof process.env.NODE_PG_FORCE_NATIVE !== 'undefined') {
+       return native
+     },
+   })
+-}
++// }
+diff --git a/node_modules/pg/lib/stream.js b/node_modules/pg/lib/stream.js
+index 67b1b3c..a655dbd 100644
+--- a/node_modules/pg/lib/stream.js
++++ b/node_modules/pg/lib/stream.js
+@@ -3,13 +3,14 @@
+  * @returns {Duplex}
+  */
+ module.exports.getStream = function getStream(ssl) {
+-  const net = require('net')
++  const net = require('net');
+   if (typeof net.Socket === 'function') {
+     return new net.Socket()
+-  } else {
+-    const { CloudflareSocket } = require('pg-cloudflare')
+-    return new CloudflareSocket(ssl)
+   }
++  // PATCH to prevent compilation error under Next.js development build (`next dev`):
++  // `Error [TypeError]: CloudflareSocket is not a constructor`
++  const pgCloudflare = require('pg-cloudflare')
++  return new pgCloudflare.CloudflareSocket(ssl)
+ }
+ 
+ /**
+@@ -18,7 +19,7 @@ module.exports.getStream = function getStream(ssl) {
+  * @returns {Duplex}
+  */
+ module.exports.getSecureStream = function getSecureStream(options) {
+-  var tls = require('tls')
++  var tls = typeof EdgeRuntime !== "string" ? require('tls') : {}
+   if (tls.connect) {
+     return tls.connect(options)
+   } else {
