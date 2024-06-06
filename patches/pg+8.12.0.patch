@@ -1,0 +1,23 @@
+diff --git a/node_modules/pg/lib/crypto/utils-webcrypto.js b/node_modules/pg/lib/crypto/utils-webcrypto.js
+index 0433f01..4038729 100644
+--- a/node_modules/pg/lib/crypto/utils-webcrypto.js
++++ b/node_modules/pg/lib/crypto/utils-webcrypto.js
+@@ -1,4 +1,4 @@
+-const nodeCrypto = require('crypto')
++const nodeCrypto = typeof EdgeRuntime !== "string" ? require('crypto') : {};
+ 
+ module.exports = {
+   postgresMd5PasswordHash,
+@@ -13,7 +13,11 @@ module.exports = {
+  * The Web Crypto API - grabbed from the Node.js library or the global
+  * @type Crypto
+  */
+-const webCrypto = nodeCrypto.webcrypto || globalThis.crypto
++
++// PATCH: Prevent compilation error under Next.js Edge runtime development build (`next dev`)
++// - `Error: The edge runtime does not support Node.js 'crypto' module.`
++const webCrypto = ("webcrypto" in nodeCrypto ? nodeCrypto.webcrypto : undefined) ?? globalThis.crypto
++
+ /**
+  * The SubtleCrypto API for low level crypto operations.
+  * @type SubtleCrypto
