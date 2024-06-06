@@ -54,7 +54,7 @@ index 6a535a8..02eb89b 100644
  
  module.exports = ConnectionParameters
 diff --git a/node_modules/pg/lib/connection.js b/node_modules/pg/lib/connection.js
-index af4b8f1..c426b15 100644
+index af4b8f1..23e8836 100644
 --- a/node_modules/pg/lib/connection.js
 +++ b/node_modules/pg/lib/connection.js
 @@ -1,6 +1,5 @@
@@ -64,6 +64,15 @@ index af4b8f1..c426b15 100644
  var EventEmitter = require('events').EventEmitter
  
  const { parse, serialize } = require('pg-protocol')
+@@ -92,7 +91,7 @@ class Connection extends EventEmitter {
+         }
+       }
+ 
+-      var net = require('net')
++      var net = typeof EdgeRuntime !== "string" ? require('net') : {};
+       if (net.isIP && net.isIP(host) === 0) {
+         options.servername = host
+       }
 diff --git a/node_modules/pg/lib/crypto/utils-webcrypto.js b/node_modules/pg/lib/crypto/utils-webcrypto.js
 index 0433f01..4038729 100644
 --- a/node_modules/pg/lib/crypto/utils-webcrypto.js
@@ -133,7 +142,7 @@ index 1742d16..0abb12e 100644
 -}
 +// }
 diff --git a/node_modules/pg/lib/stream.js b/node_modules/pg/lib/stream.js
-index 67b1b3c..a655dbd 100644
+index 67b1b3c..ae268d9 100644
 --- a/node_modules/pg/lib/stream.js
 +++ b/node_modules/pg/lib/stream.js
 @@ -3,13 +3,14 @@
@@ -141,7 +150,7 @@ index 67b1b3c..a655dbd 100644
   */
  module.exports.getStream = function getStream(ssl) {
 -  const net = require('net')
-+  const net = require('net');
++  const net = typeof EdgeRuntime !== "string" ? require('net') : {};
    if (typeof net.Socket === 'function') {
      return new net.Socket()
 -  } else {
