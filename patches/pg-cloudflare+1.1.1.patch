@@ -1,0 +1,12 @@
+diff --git a/node_modules/pg-cloudflare/package.json b/node_modules/pg-cloudflare/package.json
+index d0ae9f4..6710df3 100644
+--- a/node_modules/pg-cloudflare/package.json
++++ b/node_modules/pg-cloudflare/package.json
+@@ -11,6 +11,7 @@
+   },
+   "exports": {
+     "workerd": "./dist/index.js",
++    "browser": "./dist/index.js",
+     "default": "./dist/empty.js"
+   },
+   "scripts": {
