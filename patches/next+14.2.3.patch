@@ -1,0 +1,15 @@
+diff --git a/node_modules/next/dist/server/web/sandbox/context.js b/node_modules/next/dist/server/web/sandbox/context.js
+index 579ec97..06487e4 100644
+--- a/node_modules/next/dist/server/web/sandbox/context.js
++++ b/node_modules/next/dist/server/web/sandbox/context.js
+@@ -160,6 +160,10 @@ function getDecorateUnhandledRejection(runtime) {
+ }
+ const NativeModuleMap = (()=>{
+     const mods = {
++        // PATCH to expose Node.js `net.Socket` API within Next.js Edge runtime local sandbox
++        // (see also required changes in `next.config.js`) to add webpack externals)
++        "node:net": (0, _pick.pick)(require("net"), ["Socket"]),
++        //
+         "node:buffer": (0, _pick.pick)(_nodebuffer.default, [
+             "constants",
+             "kMaxLength",
