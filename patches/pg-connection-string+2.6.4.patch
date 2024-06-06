@@ -1,0 +1,20 @@
+diff --git a/node_modules/pg-connection-string/index.js b/node_modules/pg-connection-string/index.js
+index c7fc72a..64e72b5 100644
+--- a/node_modules/pg-connection-string/index.js
++++ b/node_modules/pg-connection-string/index.js
+@@ -73,7 +73,14 @@ function parse(str) {
+   }
+ 
+   // Only try to load fs if we expect to read from the disk
+-  const fs = config.sslcert || config.sslkey || config.sslrootcert ? require('fs') : null
++  let fs = null
++  try {  
++    fs = config.sslcert || config.sslkey || config.sslrootcert ? require('fs') : null
++  } catch (e) {
++    // if (e.code = 'MODULE_NOT_FOUND') {
++    //   // Do nothing
++    // }
++  }
+ 
+   if (config.sslcert) {
+     config.ssl.cert = fs.readFileSync(config.sslcert).toString()
